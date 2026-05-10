@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell \"Get-ChildItem -Path . -Recurse -Filter '*rank*' -ErrorAction SilentlyContinue | Select-Object FullName\")",
+      "Bash(flutter analyze *)"
+    ]
+  }
+}
