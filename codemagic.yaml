@@ -35,10 +35,14 @@ workflows:
             --build-number=$BUILD_NUMBER
       - name: Build IPA with xcode-project
         script: |
+          PROFILE_PATH=$(ls $HOME/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision | head -n 1)
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" /dev/stdin <<< $(security cms -D -i "$PROFILE_PATH"))
+          echo "Using profile: $PROFILE_NAME"
           xcode-project build-ipa \
             --workspace "ios/Runner.xcworkspace" \
             --scheme "Runner" \
-            --config "Release"
+            --config "Release" \
+            --archive-xcargs "PROVISIONING_PROFILE_SPECIFIER='$PROFILE_NAME' CODE_SIGN_STYLE=Manual"
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
