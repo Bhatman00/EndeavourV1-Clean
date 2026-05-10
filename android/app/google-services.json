@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1066211105574",
+    "project_id": "endeavour-backend-57d62",
+    "storage_bucket": "endeavour-backend-57d62.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1066211105574:android:3118002c2a9b70d560bfe7",
+        "android_client_info": {
+          "package_name": "com.endeavour.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLCPIHWZlJzh3k9VpAWGubnpRAwmMfHCY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1066211105574:android:7f05cee5b9db681560bfe7",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLCPIHWZlJzh3k9VpAWGubnpRAwmMfHCY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
