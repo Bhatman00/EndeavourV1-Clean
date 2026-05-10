@@ -6,6 +6,9 @@ workflows:
     integrations:
       app_store_connect: Codemagic
     environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.ares.endeavour
       vars:
         APP_STORE_APPLE_ID: 6767949191
         BUNDLE_ID: com.ares.endeavour
@@ -13,44 +16,17 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Set up code signing
-        script: |
-          set -e
-          keychain initialize
-
-          echo "=== Step 1: Fetch or create signing files ==="
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create \
-            --platform IOS \
-            --verbose
-
-          echo "=== Step 2: Add certificates to keychain ==="
-          keychain add-certificates
-
-          echo "=== Step 3: Apply profiles to Xcode project ==="
-          xcode-project use-profiles
-
-          echo "=== Step 4: Verify installed profiles ==="
-          ls -la "$HOME/Library/MobileDevice/Provisioning Profiles/" || echo "Profile directory missing!"
-          
-          echo "=== Step 5: Verify codesigning identities ==="
-          security find-identity -v -p codesigning
-
       - name: Get Flutter packages
         script: |
           flutter packages pub get
-
       - name: Install pods
         script: |
           find . -name "Podfile" -execdir pod install \;
-
       - name: Flutter build (no codesign)
         script: |
           flutter build ios --release --no-codesign \
             --build-name=1.0.$BUILD_NUMBER \
             --build-number=$BUILD_NUMBER
-
       - name: Build IPA with xcode-project
         script: |
           xcode-project build-ipa \
