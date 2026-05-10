@@ -21,7 +21,8 @@ workflows:
           keychain initialize
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --create
+            --create \
+            --platform IOS
           keychain add-certificates
           xcode-project use-profiles
       - name: Get Flutter packages
@@ -30,6 +31,10 @@ workflows:
       - name: Install pods
         script: |
           find . -name "Podfile" -execdir pod install \;
+      - name: Set Flutter project bundle ID
+        script: |
+          cd $CM_BUILD_DIR/ios
+          plutil -replace CFBundleIdentifier -string "$BUNDLE_ID" Runner/Info.plist || true
       - name: Flutter build ipa
         script: |
           flutter build ipa --release \
