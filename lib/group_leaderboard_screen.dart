@@ -36,7 +36,8 @@ class _GroupLeaderboardScreenState extends State<GroupLeaderboardScreen> {
     'Total Elo',
     'Gym Elo',
     'Academic Elo',
-    'Art Elo',
+    'Running Elo',
+    'Luminary Elo',
   ];
 
   @override
@@ -59,8 +60,10 @@ class _GroupLeaderboardScreenState extends State<GroupLeaderboardScreen> {
         _toInt(data['effortElo']) +
         _toInt(data['academicSkillElo']) +
         _toInt(data['academicEffortElo']) +
-        _toInt(data['artSkillElo']) +
-        _toInt(data['artEffortElo']);
+        _toInt(data['runningSkillElo']) +
+        _toInt(data['runningEffortElo']) +
+        _toInt(data['luminarySkillElo']) +
+        _toInt(data['luminaryEffortElo']);
   }
 
   String _topEndeavour(Map<String, dynamic>? data) {
@@ -69,12 +72,14 @@ class _GroupLeaderboardScreenState extends State<GroupLeaderboardScreen> {
     final int gym = _toInt(data['skillElo']) + _toInt(data['effortElo']);
     final int academic =
         _toInt(data['academicSkillElo']) + _toInt(data['academicEffortElo']);
-    final int art = _toInt(data['artSkillElo']) + _toInt(data['artEffortElo']);
+    final int running =
+        _toInt(data['runningSkillElo']) + _toInt(data['runningEffortElo']);
+    final int luminary =
+        _toInt(data['luminarySkillElo']) + _toInt(data['luminaryEffortElo']);
 
-    if (gym == 0 && academic == 0 && art == 0) return 'Unknown';
-    if (gym >= academic && gym >= art) return 'Gym';
-    if (academic >= gym && academic >= art) return 'Academic';
-    return 'Art';
+    if (gym == 0 && academic == 0 && running == 0 && luminary == 0) return 'Unknown';
+    final scores = {'Gym': gym, 'Academic': academic, 'Running': running, 'Luminary': luminary};
+    return scores.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
   }
 
   String _formatElo(int elo) {
@@ -118,7 +123,8 @@ class _GroupLeaderboardScreenState extends State<GroupLeaderboardScreen> {
         'academicElo':
             _toInt(data['academicSkillElo']) +
             _toInt(data['academicEffortElo']),
-        'artElo': _toInt(data['artSkillElo']) + _toInt(data['artEffortElo']),
+        'runningElo': _toInt(data['runningSkillElo']) + _toInt(data['runningEffortElo']),
+        'luminaryElo': _toInt(data['luminarySkillElo']) + _toInt(data['luminaryEffortElo']),
         'topEndeavour': _topEndeavour(data),
       };
     });
@@ -130,8 +136,11 @@ class _GroupLeaderboardScreenState extends State<GroupLeaderboardScreen> {
       if (_selectedSort == 'Academic Elo') {
         return (b['academicElo'] as int).compareTo(a['academicElo'] as int);
       }
-      if (_selectedSort == 'Art Elo') {
-        return (b['artElo'] as int).compareTo(a['artElo'] as int);
+      if (_selectedSort == 'Running Elo') {
+        return (b['runningElo'] as int).compareTo(a['runningElo'] as int);
+      }
+      if (_selectedSort == 'Luminary Elo') {
+        return (b['luminaryElo'] as int).compareTo(a['luminaryElo'] as int);
       }
       return (b['elo'] as int).compareTo(a['elo'] as int);
     });
@@ -144,8 +153,10 @@ class _GroupLeaderboardScreenState extends State<GroupLeaderboardScreen> {
         return Icons.fitness_center;
       case 'academic':
         return Icons.school;
-      case 'art':
-        return Icons.palette;
+      case 'running':
+        return Icons.directions_run_rounded;
+      case 'luminary':
+        return Icons.auto_awesome_rounded;
       default:
         return Icons.star;
     }
@@ -467,8 +478,10 @@ class _GroupLeaderboardScreenState extends State<GroupLeaderboardScreen> {
                                               ? member['gymElo'] as int
                                               : _selectedSort == 'Academic Elo'
                                               ? member['academicElo'] as int
-                                              : _selectedSort == 'Art Elo'
-                                              ? member['artElo'] as int
+                                              : _selectedSort == 'Running Elo'
+                                              ? member['runningElo'] as int
+                                              : _selectedSort == 'Luminary Elo'
+                                              ? member['luminaryElo'] as int
                                               : member['elo'] as int,
                                         ),
                                         style: const TextStyle(

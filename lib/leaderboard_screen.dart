@@ -48,6 +48,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     'Europe',
     'NA',
     'SA',
+    'Africa',
     'Unknown',
   ];
 

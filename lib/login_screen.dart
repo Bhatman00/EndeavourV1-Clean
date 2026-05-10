@@ -21,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   String _selectedRegion = 'Select region';
-  final List<String> _regions = ['Select region', 'OCE', 'Asia', 'Europe', 'NA', 'SA', 'Unknown'];
+  final List<String> _regions = ['Select region', 'OCE', 'Asia', 'Europe', 'NA', 'SA', 'Africa', 'Unknown'];
 
   bool _isLogin = true;
   bool _isLoading = false;
