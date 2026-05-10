@@ -30,7 +30,6 @@ workflows:
       - name: Archive and export IPA
         script: |
           set -e
-          # Archive the app with allowProvisioningUpdates so Xcode can fetch profiles
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner \
             -configuration Release \
@@ -38,7 +37,6 @@ workflows:
             -allowProvisioningUpdates \
             archive
           
-          # Generate export options plist on the fly
           cat > /tmp/export_options.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -53,12 +51,16 @@ workflows:
               <key>uploadSymbols</key>
               <true/>
               <key>signingStyle</key>
-              <string>automatic</string>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.ares.endeavour</key>
+                  <string>Endeavour App Store</string>
+              </dict>
           </dict>
           </plist>
           EOF
           
-          # Export the IPA
           mkdir -p build/ios/ipa
           xcodebuild -exportArchive \
             -archivePath build/ios/xcarchive/Runner.xcarchive \
