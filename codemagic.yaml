@@ -30,11 +30,12 @@ workflows:
       - name: Archive and export IPA
         script: |
           set -e
-          # Archive the app
+          # Archive the app with allowProvisioningUpdates so Xcode can fetch profiles
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner \
             -configuration Release \
             -archivePath build/ios/xcarchive/Runner.xcarchive \
+            -allowProvisioningUpdates \
             archive
           
           # Generate export options plist on the fly
@@ -62,7 +63,8 @@ workflows:
           xcodebuild -exportArchive \
             -archivePath build/ios/xcarchive/Runner.xcarchive \
             -exportPath build/ios/ipa \
-            -exportOptionsPlist /tmp/export_options.plist
+            -exportOptionsPlist /tmp/export_options.plist \
+            -allowProvisioningUpdates
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
