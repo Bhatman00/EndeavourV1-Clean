@@ -839,7 +839,7 @@ class _GroupCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${group['memberCount'] ?? 0} members',
+                    '${(group['members'] as List?)?.length ?? 0} members',
                     style: const TextStyle(color: Colors.white54, fontSize: 13),
                   ),
                 ],
@@ -908,7 +908,7 @@ class _GroupSearchResultCardState extends State<_GroupSearchResultCard> {
                   ],
                 ),
                 Text(
-                  '${widget.group['memberCount'] ?? 0} members',
+                  '${(widget.group['members'] as List?)?.length ?? 0} members',
                   style: const TextStyle(color: Colors.white38, fontSize: 12),
                 ),
               ],

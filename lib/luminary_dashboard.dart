@@ -10,6 +10,7 @@ import 'rank_badge_painters.dart';
 import 'juice_widgets.dart' hide Curves;
 import 'stopwatch_service.dart';
 import 'anticheat_service.dart';
+import 'daily_challenges_widget.dart';
 
 const Color _kAccent    = Color(0xFFFFD60A);
 const Color _kAccentDim = Color(0xFFB89A00);
@@ -45,7 +46,6 @@ class _LuminaryDashboardState extends State<LuminaryDashboard>
   bool _showCelebration = false;
   Rank? _currentRank;
 
-  double _effortSliderValue = 30;
   int _baselineHours = 10;
   int _streak = 0;
 
@@ -283,62 +283,6 @@ class _LuminaryDashboardState extends State<LuminaryDashboard>
     }
   }
 
-  Future<bool> _addEffort() async {
-    final mins = _effortSliderValue.toInt();
-    if (mins <= 0) return false;
-
-    // Anticheat: daily effort cap
-    final capStatus = await AnticheatService.checkDailyEffortCap(mins, 'luminary');
-    if (capStatus != DailyCapStatus.allowed) {
-      if (mounted) {
-        if (capStatus == DailyCapStatus.softCapped) {
-          _showFriendlyCapDialog();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Daily effort limit reached (24h max).')),
-          );
-        }
-      }
-      return false;
-    }
-
-    HapticFeedback.lightImpact();
-    final newTotal = _totalElo + mins;
-    final newRank  = RankUtils.getRank(newTotal, RankUtils.luminaRanks);
-    setState(() {
-      _prevTotalElo       = _totalElo;
-      _effortElo         += mins;
-      _effortSliderValue  = 30;
-      if (_prevRankName != null && newRank.name != _prevRankName) {
-        _showCelebration = true;
-        _currentRank = newRank;
-      }
-      _prevRankName = newRank.name;
-    });
-    final uid = _uid;
-    if (uid != null) {
-      await FirebaseFirestore.instance.collection('users').doc(uid).set(
-        {'luminaryEffortElo': FieldValue.increment(mins)}, SetOptions(merge: true));
-    }
-    // Anticheat: log daily effort
-    await AnticheatService.logDailyEffort(mins, 'luminary');
-    _updateStreak();
-    return true;
-  }
-
-  void _showEffortSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => _EffortSheet(
-        sliderValue: _effortSliderValue,
-        onSliderChanged: (v) => setState(() => _effortSliderValue = v),
-        onAddEffort: _addEffort,
-      ),
-    );
-  }
-
   void _showEditBaselineDialog() {
     showDialog(
       context: context,
@@ -400,7 +344,6 @@ class _LuminaryDashboardState extends State<LuminaryDashboard>
                             onStop:   _stopStopwatch,
                             onReset:  _resetStopwatch,
                             onSubmit: _submitStopwatchTime,
-                            onLogWork: _showEffortSheet,
                             rank: RankUtils.getRank(_totalElo, RankUtils.luminaRanks),
                             streak: _streak,
                           )
@@ -470,7 +413,7 @@ class _DashboardView extends StatelessWidget {
   final int baselineHours;
   final int stopwatchSecs;
   final bool stopwatchRunning;
-  final VoidCallback onStart, onStop, onReset, onLogWork;
+  final VoidCallback onStart, onStop, onReset;
   final Future<void> Function() onSubmit;
   final Rank rank;
   final int streak;
@@ -482,7 +425,7 @@ class _DashboardView extends StatelessWidget {
     required this.baselineHours,
     required this.stopwatchSecs, required this.stopwatchRunning,
     required this.onStart, required this.onStop, required this.onReset,
-    required this.onSubmit, required this.onLogWork, required this.rank,
+    required this.onSubmit, required this.rank,
     required this.streak,
   });
 
@@ -531,14 +474,9 @@ class _DashboardView extends StatelessWidget {
             onSubmit: onSubmit, accent: _kAccent,
           )),
           const SizedBox(height: 10),
-          _GradientButton(
-            label: 'Log Session',
-            icon: Icons.bolt_rounded,
-            onTap: onLogWork,
-            accent: _kAccent, accentDim: _kAccentDim,
-          ),
-          const SizedBox(height: 10),
           _StreakCard(streak: streak, accent: _kAccent),
+          const SizedBox(height: 10),
+          EmbeddedChallengesSection(path: 'luminary', accent: _kAccent),
         ],
       ),
     );
@@ -927,201 +865,6 @@ class _SessionCard extends StatelessWidget {
           ),
         ],
       ]),
-    );
-  }
-}
-
-// ─── Gradient Button ──────────────────────────────────────────────────────────
-
-class _GradientButton extends StatefulWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-  final Color accent, accentDim;
-  const _GradientButton({required this.label, required this.icon,
-      required this.onTap, required this.accent, required this.accentDim});
-
-  @override
-  State<_GradientButton> createState() => _GradientButtonState();
-}
-
-class _GradientButtonState extends State<_GradientButton> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) { setState(() => _pressed = false); HapticFeedback.mediumImpact(); widget.onTap(); },
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1.0,
-        duration: const Duration(milliseconds: 120),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: const Alignment(-0.8, -1), end: const Alignment(0.8, 1),
-              colors: [widget.accent, widget.accentDim],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: widget.accent.withAlpha(80), blurRadius: 20, offset: const Offset(0, 6))],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(widget.icon, color: Colors.black, size: 18),
-              const SizedBox(width: 8),
-              Text(widget.label, style: const TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black,
-                fontFamily: '.SF Pro Display', letterSpacing: -0.2)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Effort Sheet ─────────────────────────────────────────────────────────────
-
-class _EffortSheet extends StatefulWidget {
-  final double sliderValue;
-  final ValueChanged<double> onSliderChanged;
-  final Future<bool> Function() onAddEffort;
-
-  const _EffortSheet({required this.sliderValue, required this.onSliderChanged, required this.onAddEffort});
-
-  @override
-  State<_EffortSheet> createState() => _EffortSheetState();
-}
-
-class _EffortSheetState extends State<_EffortSheet> {
-  bool _saving = false;
-  late double _localValue;
-
-  @override
-  void initState() {
-    super.initState();
-    _localValue = widget.sliderValue;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A1600),
-            border: Border(top: BorderSide(color: Colors.white.withAlpha(25))),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 36, height: 4,
-                  margin: const EdgeInsets.only(bottom: 22),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(31),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      const Text('Work Session', style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white,
-                        fontFamily: '.SF Pro Display', letterSpacing: -0.4)),
-                      Text('How long did you work?', style: TextStyle(
-                        fontSize: 12, color: Colors.white.withAlpha(102), fontFamily: '.SF Pro Display')),
-                    ]),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: _kAccent.withAlpha(31), borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _kAccent.withAlpha(76)),
-                      ),
-                      child: Text('${_localValue.toInt()} min', style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white,
-                        fontFamily: '.SF Pro Display')),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 22),
-                SliderTheme(
-                  data: SliderThemeData(
-                    activeTrackColor: _kAccent,
-                    inactiveTrackColor: Colors.white.withAlpha(25),
-                    trackHeight: 4,
-                    thumbColor: _kAccent,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 11),
-                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
-                  ),
-                  child: Slider(
-                    value: _localValue, min: 5, max: 180, divisions: 35,
-                    onChanged: (v) {
-                      HapticFeedback.selectionClick();
-                      setState(() => _localValue = v);
-                      widget.onSliderChanged(v);
-                    },
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('5m', style: TextStyle(fontSize: 11,
-                        color: Colors.white.withAlpha(64), fontFamily: '.SF Pro Display')),
-                    Text('3h', style: TextStyle(fontSize: 11,
-                        color: Colors.white.withAlpha(64), fontFamily: '.SF Pro Display')),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity, height: 52,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: _saving
-                            ? [const Color(0xFF34C759), const Color(0xFF2A9D47)]
-                            : [_kAccent, _kAccentDim],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(
-                        color: (_saving ? const Color(0xFF34C759) : _kAccent).withAlpha(100),
-                        blurRadius: 20, offset: const Offset(0, 6))],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () async {
-                          if (_saving) return;
-                          HapticFeedback.mediumImpact();
-                          setState(() => _saving = true);
-                          final ok = await widget.onAddEffort();
-                          if (ok && mounted) Navigator.of(context).pop();
-                          if (mounted) setState(() => _saving = false);
-                        },
-                        child: Center(child: Text(_saving ? 'Saved ✓' : 'Log Session',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600,
-                              color: Colors.black, fontFamily: '.SF Pro Display', letterSpacing: -0.2))),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

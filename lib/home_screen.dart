@@ -10,7 +10,6 @@ import 'luminary_dashboard.dart';
 import 'groups_screen.dart';
 import 'leaderboard_screen.dart';
 import 'notifications_screen.dart';
-import 'challenges_screen.dart';
 import 'social_service.dart';
 import 'profile_screen.dart';
 import 'rank_utils.dart';
@@ -246,14 +245,6 @@ class _GlassBottomBar extends StatelessWidget {
                 onTap: () {
                   HapticFeedback.mediumImpact();
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const ChallengesScreen()));
-                },
-                child: const _ChallengesIcon(),
-              ),
-              _BarItem(
-                onTap: () {
-                  HapticFeedback.mediumImpact();
-                  Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const LeaderboardScreen()));
                 },
                 child: const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFB830), size: 24),
@@ -337,72 +328,6 @@ class _BarItemState extends State<_BarItem> {
         ),
       ),
     );
-  }
-}
-
-class _ChallengesIcon extends StatelessWidget {
-  const _ChallengesIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
-      return const Icon(Icons.bolt_rounded, color: Color(0xFFFFD60A), size: 24);
-    }
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
-      builder: (context, snap) {
-        final data = (snap.data?.data() as Map<String, dynamic>?) ?? {};
-        final savedDate = data['challengeDate'] as String? ?? '';
-        final completedIds = List<String>.from(data['completedChallengeIds'] ?? []);
-        final today = _todayKey();
-        final doneToday = savedDate == today ? completedIds.length : 0;
-        // Total = 3 challenges per active path + 1 cross-path bonus if 2+ paths active
-        int asInt(dynamic v) => v is int ? v : (v is num ? v.toInt() : 0);
-        final gymElo = asInt(data['skillElo']) + asInt(data['effortElo']);
-        final acadElo = asInt(data['academicSkillElo']) + asInt(data['academicEffortElo']);
-        final runElo = asInt(data['runningSkillElo']) + asInt(data['runningEffortElo']);
-        final lumElo = asInt(data['luminarySkillElo']) + asInt(data['luminaryEffortElo']);
-        final activePaths = [gymElo, acadElo, runElo, lumElo].where((e) => e > 0).length;
-        final total = activePaths * 3 + (activePaths >= 2 ? 1 : 0);
-        final remaining = total > 0 ? (total - doneToday).clamp(0, total) : 0;
-
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            const Icon(Icons.bolt_rounded, color: Color(0xFFFFD60A), size: 24),
-            if (remaining > 0)
-              Positioned(
-                top: -4, right: -6,
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFD60A),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFF12121A),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Text(
-                    '$remaining',
-                    style: const TextStyle(
-                      fontSize: 8,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        );
-      },
-    );
-  }
-
-  static String _todayKey() {
-    final now = DateTime.now();
-    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   }
 }
 
