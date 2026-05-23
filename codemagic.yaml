@@ -71,11 +71,12 @@ workflows:
             -exportPath build/ios/ipa \
             -exportOptionsPlist /tmp/export_options.plist \
             -allowProvisioningUpdates
+      - name: Upload IPA to App Store Connect
+        script: |
+          app-store-connect publish \
+            --path build/ios/ipa/*.ipa \
+            --skip-package-validation
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
       - flutter_drive.log
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
