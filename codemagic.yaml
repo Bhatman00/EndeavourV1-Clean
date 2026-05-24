@@ -80,3 +80,19 @@ workflows:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
       - flutter_drive.log
+
+  android-beta:
+    name: Android Beta
+    instance_type: linux # Linux is faster and cheaper for Android builds
+    max_build_duration: 60
+    environment:
+      flutter: stable
+    scripts:
+      - name: Get Flutter packages
+        script: flutter packages pub get
+      - name: Build Android App Bundle
+        script: |
+          # Build the bundle
+          flutter build appbundle --release
+    artifacts:
+      - build/**/outputs/**/*.aab
