@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login_screen.dart';
-import 'email_verification_screen.dart';
 import 'home_screen.dart';
 
 void main() {
@@ -110,29 +108,7 @@ class EndeavourApp extends StatelessWidget {
 
               if (!authSnapshot.hasData) return const LoginScreen();
 
-              final user = authSnapshot.data!;
-
-              // Existing accounts verified via Firebase email link — let them through.
-              if (user.emailVerified) return const HomeScreen();
-
-              // New accounts: gate on Firestore codeVerified flag.
-              return StreamBuilder<DocumentSnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(user.uid)
-                    .snapshots(),
-                builder: (context, fsSnapshot) {
-                  if (fsSnapshot.connectionState == ConnectionState.waiting) {
-                    return const Scaffold(
-                      backgroundColor: Color(0xFF0F0F13),
-                      body: Center(child: CircularProgressIndicator(color: Colors.white)),
-                    );
-                  }
-                  final data = fsSnapshot.data?.data() as Map<String, dynamic>?;
-                  final verified = data?['codeVerified'] == true;
-                  return verified ? const HomeScreen() : const EmailVerificationScreen();
-                },
-              );
+              return const HomeScreen();
             },
           ),
         );
