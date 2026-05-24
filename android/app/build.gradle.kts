@@ -67,3 +67,10 @@ android {
 flutter {
     source = "../.."
 }
+
+// MOVED THIS OUTSIDE THE ANDROID BLOCK:
+tasks.configureEach {
+    if (name.contains("extractDeepLinks")) {
+        mustRunAfter("processDebugGoogleServices", "processReleaseGoogleServices")
+    }
+}
