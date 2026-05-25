@@ -83,17 +83,20 @@ workflows:
 
   android-beta:
     name: Android Beta
-    instance_type: linux # Linux is faster and cheaper for Android builds
+    instance_type: linux
     max_build_duration: 60
     environment:
       flutter: stable
     scripts:
+      - name: Flutter Clean
+        script: flutter clean
       - name: Get Flutter packages
-        script: flutter packages pub get
+        script: flutter pub get
       - name: Build Android App Bundle
+        script: flutter build appbundle --release
+      - name: Locate AAB file
         script: |
-          # Build the bundle
-          flutter build appbundle --release
+          echo "Looking for the AAB file..."
+          find build -name "*.aab"
     artifacts:
       - build/**/outputs/**/*.aab
-      - build/**/outputs/**/mapping.txt
